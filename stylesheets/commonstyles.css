@@ -1,0 +1,32 @@
+body {
+    background: linear-gradient(orange, hotpink);
+    background-attachment: fixed;
+    margin: 1rem;
+    overflow-x: hidden;
+    overflow-y: hidden;
+}
+
+#pageContainer {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+#navContainer {
+    display: flex;
+    flex-direction: column;
+    width: 10vw;
+    height: 100vh;
+    justify-content: center;
+}
+
+#navContainer ul {
+    background: linear-gradient(110deg,rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.25) 41%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0.25) 60%, rgba(255, 255, 255, 0.25) 100%);
+    width: 7.5vh; /*This is vh to maintain aspect ratio*/
+    border-radius: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    box-shadow: 0 0 1rem;
+    list-style: none;
+    padding: 5mm;
+}
