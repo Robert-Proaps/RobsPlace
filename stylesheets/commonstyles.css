@@ -30,3 +30,11 @@ body {
     list-style: none;
     padding: 5mm;
 }
+
+.navIcon {
+    transition: transform 0.3s ease-in-out;
+}
+
+.navIcon:hover {
+    transform: scale(1.3);
+}
