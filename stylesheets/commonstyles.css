@@ -1,3 +1,8 @@
+:root {
+    --ReliableExcavationDemolition: #B8383B;
+    --BuildersLeagueUnited: #5885A2;
+}
+
 @font-face {
     font-family: 'TF2';
     src: url('../Assets/Fonts/TF2.ttf');
@@ -41,4 +46,23 @@
     text-decoration: none;
     font-family: TF2Secondary;
     color: black;
+}
+
+.headerContainer .lineContainer hr{
+    height: 5px;
+    border-style: none;
+}
+
+.lineContainer .topLine {
+    background-color: var(--ReliableExcavationDemolition);
+}
+
+.lineContainer .bottomLine {
+    background-color: var(--BuildersLeagueUnited);
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: Compacta;
 }
