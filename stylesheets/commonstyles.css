@@ -19,7 +19,7 @@
 
 @font-face {
     font-family: 'Compacta';
-    src: url('../Assets/Fonts/unicode.compacta.ttf');
+    src: url('../Assets/Fonts/unicode_compacta.ttf');
 }
 
 .headerContainer {
@@ -71,6 +71,7 @@ body {
 .footerContainer {
     display: flex;
     flex-direction: row;
+    color: white;
     background-color: dimgray;
     height: 4cm;
     font-size: 32pt;
@@ -78,4 +79,13 @@ body {
     bottom: 0;
     align-self: center;
     width: 100vw;
+}
+
+#copyrightContainer {
+    font-size: 14pt;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    text-align: right;
+    width: 100vw;
+    height: 1cm;
+    padding: 5mm;
 }
