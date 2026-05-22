@@ -1,0 +1,13 @@
+#welcomeBlurb {
+    font-family:'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    font-size: 14pt;
+    padding-top: 0;
+    padding-right: 1cm;
+    padding-bottom: 0;
+    padding-left: 1cm;
+    display: flex;
+}
+
+#welcomeParagraph {
+    width: 50%
+}

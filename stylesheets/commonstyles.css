@@ -1,40 +1,91 @@
-body {
-    background: linear-gradient(orange, hotpink);
-    background-attachment: fixed;
-    margin: 1rem;
-    overflow-x: hidden;
-    overflow-y: hidden;
+:root {
+    --ReliableExcavationDemolition: #B8383B;
+    --BuildersLeagueUnited: #5885A2;
 }
 
-#pageContainer {
-    display: flex;
-    flex-direction: row-reverse;
+@font-face {
+    font-family: 'TF2';
+    src: url('../Assets/Fonts/TF2.ttf');
 }
 
-#navContainer {
+@font-face {
+    font-family: 'TF2Build';
+    src: url('../Assets/Fonts/TF2Build.ttf');
+}
+@font-face {
+    font-family: 'TF2Secondary';
+    src: url('../Assets/Fonts/TF2secondary.ttf');
+}
+
+@font-face {
+    font-family: 'Compacta';
+    src: url('../Assets/Fonts/unicode_compacta.ttf');
+}
+
+.headerContainer {
     display: flex;
+    padding-top: 0.5cm;
+    padding-right: 1cm;
+    padding-bottom: 0.5cm;
+    padding-left:1cm;
     flex-direction: column;
-    width: 10vw;
-    height: 100vh;
-    justify-content: center;
 }
 
-#navContainer ul {
-    background: linear-gradient(110deg,rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.25) 41%, rgba(255, 255, 255, 0.75) 50%, rgba(255, 255, 255, 0.25) 60%, rgba(255, 255, 255, 0.25) 100%);
-    width: 7.5vh; /*This is vh to maintain aspect ratio*/
-    border-radius: 1.5rem;
+.headerContainer h1 {
+    font-size: 30pt;
+}
+
+.navContainer {
     display: flex;
-    flex-direction: column;
     justify-content: space-evenly;
-    box-shadow: 0 0 1rem;
-    list-style: none;
+    height: 2cm;
+    font-size: 20pt;
+}
+
+.navContainer a {
+    text-decoration: none;
+    font-family: TF2Secondary;
+    color: black;
+}
+
+.headerContainer .lineContainer hr{
+    height: 5px;
+    border-style: none;
+}
+
+.lineContainer .topLine {
+    background-color: var(--ReliableExcavationDemolition);
+}
+
+.lineContainer .bottomLine {
+    background-color: var(--BuildersLeagueUnited);
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    font-family: Compacta;
+    margin: 0;
+}
+
+.footerContainer {
+    display: flex;
+    flex-direction: row;
+    color: white;
+    background-color: dimgray;
+    height: 4cm;
+    font-size: 32pt;
+    position: absolute;
+    bottom: 0;
+    align-self: center;
+    width: 100vw;
+}
+
+#copyrightContainer {
+    font-size: 14pt;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    text-align: right;
+    width: 100vw;
+    height: 1cm;
     padding: 5mm;
-}
-
-.navIcon {
-    transition: transform 0.3s ease-in-out;
-}
-
-.navIcon:hover {
-    transform: scale(1.3);
 }
