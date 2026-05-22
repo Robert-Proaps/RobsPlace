@@ -11,3 +11,34 @@
     font-family: 'TF2Secondary';
     src: url('../Assets/Fonts/TF2secondary.ttf');
 }
+
+@font-face {
+    font-family: 'Compacta';
+    src: url('../Assets/Fonts/unicode.compacta.ttf');
+}
+
+.headerContainer {
+    display: flex;
+    padding-top: 0.5cm;
+    padding-right: 1cm;
+    padding-bottom: 0.5cm;
+    padding-left:1cm;
+    flex-direction: column;
+}
+
+.headerContainer h1 {
+    font-size: 30pt;
+}
+
+.navContainer {
+    display: flex;
+    justify-content: space-evenly;
+    height: 2cm;
+    font-size: 20pt;
+}
+
+.navContainer a {
+    text-decoration: none;
+    font-family: TF2Secondary;
+    color: black;
+}
