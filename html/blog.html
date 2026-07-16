@@ -19,6 +19,12 @@
         <!--Page Content Goes Here-->
         <div id="blog_container">
         	<div class="blogEntry">
+                <h3>Working with a FOSS UI editor for LVGL</h3>
+                <h4>July 15th, 2026</h4>
+                <p>I recently started a small project to mess around with the ESP-32 "Cheap Yellow Display" after seeing it used on a berm peak youtube video. So far it has proven to be quite a capible device. One thing I wanted to try was finding a more effecient way of designing user interfaces, especially ones that work with the light and versitile graphics library.<br>
+                After doing a little bit of research I came across a few tools, but they were all closed-source, with quite pricy subscriptions. This lead me to ask an llm to do a quick search for toolsets which had simaler abilities, but were free and open source. This lead me to come across <a href="https://www.envox.eu/studio/studio-introduction/">EEZ Studio.</a><br>
+                While it takes a little bit of setup, using this tool in conjunction with PlatformIO for ESP-32 development is quite easy, and makes good UI's very accessible. So far my toolchain has involved designing the graphics in <a href="https://inkscape.org/">Inkscape</a> and importing them into my eez studio project. Then when I build the UI all the files are where they need to be in the platform.io project. There is also a system called EEZ flow that I have yet to learn, which allows some of the UI actions to be programmed graphically with a node chart, which is then included in the platform io build.<br>
+                Once the project is farther along I will post an update, or an overview page going over it, and how it was done.</p>
         	</div>
         </div>
         <div class="footerContainer">
