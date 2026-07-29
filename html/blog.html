@@ -18,6 +18,17 @@
         </div>
         <!--Page Content Goes Here-->
         <div id="blog_container">
+            <div class="blogEntry">
+                <h3>Developing Firmware on the ESP32P4 Pico from Waveshare</h3>
+                <h4>July 28th, 2026</h4>
+                <p>A more recent project of mine is to utilize a 7" Raspberry Pi touch screen as an interface for a mesh networking radio. This screen recieves its video signal from it's controller over a Display Serial Interface (DSI) Cable, and has its backlight controlled over I2C.<br>
+                The rough structure of the project which ended up not working out (more on that later) was to have a meshcore radio such as the Heltec V3 flashed with the stock serial client firmare, communicate with a Man In The Middle devboard which would handle the screen and commands.<br>
+                After a little bit of researching boards which could utilize and DSI connection I found the ESP32P4. Which is available in many packages, but in the end I settled on the Pico from waveshare due to its castelated edges, and slim form factor.<br>
+                Writing firmware for this proved a larger task than I had at first wanted, but offered a few learning opportunities. Firstly the Pico is not yet fully usable in the Arduino or Platform.io IDE's. This left me with using the Espressif IDF system, but this too was also somewhat complicated.<br>
+                It turned out the the specific board I got had an engineering release of the P4 chipset, this meant I needed to use the older ESP-IDF v5.3 release, once I figured that out, building and flashing was quite simple, but the command line for ESP-IDF is somewhat bulky, leading me to finally use<br>
+                the the Espressif IDE, which is itself a modification of the Eclipse IDE. This prooved to be a decent workflow for building firmware for the P4, though it is quite alot more involved but I was able to cobble together some software to interact with the V3, but in the end the PSRAM limitations of the PICO seemed to be a bit small for<br>
+                the framebuffer of the display. I am now currently working on implementing the system with a raspberry pi, which is substantially overkill, but has much better support, and is alot more familier, especially when compared to writing what comes close to assembly.</p>
+        	</div>
         	<div class="blogEntry">
                 <h3>Working with a FOSS UI editor for LVGL</h3>
                 <h4>July 15th, 2026</h4>
