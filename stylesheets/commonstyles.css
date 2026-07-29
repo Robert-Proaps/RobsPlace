@@ -75,9 +75,6 @@ body {
     background-color: dimgray;
     height: 4cm;
     font-size: 32pt;
-    position: absolute;
-    bottom: 0;
-    align-self: center;
     width: 100vw;
 }
 
