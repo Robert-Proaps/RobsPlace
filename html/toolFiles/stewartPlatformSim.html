@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stewart Platform Simulator — 6 DOF + Rotary Head (W)</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#151b24; --panel2:#1b2331; --line:#2a3546;
+    --txt:#dfe6f0; --dim:#8b99ad; --acc:#3fb6ff; --ok:#3ddc84; --warn:#ffb340; --err:#ff5a6a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font:13px/1.45 "Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);color:var(--txt);overflow:hidden}
+  #top{height:42px;display:flex;align-items:center;gap:14px;padding:0 14px;
+    background:linear-gradient(#1c2532,#141b25);border-bottom:1px solid var(--line)}
+  #top h1{font-size:14px;margin:0;font-weight:600;letter-spacing:.3px}
+  #top h1 span{color:var(--acc)}
+  #status{margin-left:auto;font-size:12px;padding:3px 10px;border-radius:10px;border:1px solid var(--line);background:#101722}
+  #main{display:grid;grid-template-columns:336px 1fr 232px;height:calc(100% - 42px)}
+  .col{overflow-y:auto;background:var(--panel)}
+  #left{border-right:1px solid var(--line)}
+  #right{border-left:1px solid var(--line);padding:10px}
+  #center{position:relative;background:#080b10}
+  canvas{display:block;width:100%;height:100%}
+  #tabs{display:flex;border-bottom:1px solid var(--line);background:#101722;position:sticky;top:0;z-index:5}
+  .tab{flex:1;padding:9px 4px;text-align:center;cursor:pointer;font-size:12px;color:var(--dim);
+    border-bottom:2px solid transparent;user-select:none}
+  .tab.on{color:var(--acc);border-bottom-color:var(--acc);background:var(--panel)}
+  .pane{display:none;padding:12px}
+  .pane.on{display:block}
+  h3{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);
+    margin:16px 0 8px;border-bottom:1px solid var(--line);padding-bottom:4px}
+  h3:first-child{margin-top:0}
+  .row{display:grid;grid-template-columns:78px 1fr 62px;gap:7px;align-items:center;margin-bottom:6px}
+  .row label{font-size:12px;color:var(--dim)}
+  .row label b{color:var(--txt);font-family:ui-monospace,Consolas,monospace}
+  input[type=range]{width:100%;accent-color:var(--acc);height:16px}
+  input[type=number],input[type=text],select{background:#0b1016;border:1px solid var(--line);color:var(--txt);
+    border-radius:4px;padding:3px 5px;width:100%;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .fld{margin-bottom:6px}
+  .fld span{display:block;font-size:10.5px;color:var(--dim);margin-bottom:2px}
+  button{background:#233044;border:1px solid var(--line);color:var(--txt);border-radius:5px;
+    padding:6px 9px;cursor:pointer;font-size:12px;font-family:inherit}
+  button:hover{background:#2d3d55;border-color:#3d4f6b}
+  button.p{background:var(--acc);border-color:var(--acc);color:#00263c;font-weight:600}
+  button.p:hover{background:#63c6ff}
+  button.d{background:#3a2028;border-color:#5a2c38}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .btnrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  textarea{width:100%;height:190px;background:#0b1016;border:1px solid var(--line);color:#cfe3f5;
+    border-radius:5px;padding:7px;font-family:ui-monospace,Consolas,monospace;font-size:11.5px;resize:vertical}
+  .chk{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim);margin-bottom:5px;cursor:pointer}
+  .chk input{accent-color:var(--acc)}
+  /* leg bars */
+  .leg{margin-bottom:9px;font-family:ui-monospace,Consolas,monospace;font-size:11px}
+  .leg .hd{display:flex;justify-content:space-between;margin-bottom:2px}
+  .bar{height:7px;background:#0b1016;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--ok);transition:width .05s}
+  /* program list */
+  #plist{max-height:250px;overflow-y:auto;border:1px solid var(--line);border-radius:5px;background:#0b1016;
+    font-family:ui-monospace,Consolas,monospace;font-size:11px}
+  #plist div{padding:2px 7px;border-bottom:1px solid #161d28;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #plist div.cur{background:#14364d;color:#9fdcff}
+  #plist div.done{color:#5d6b7e}
+  #plist div.bad{background:#3a1b22;color:#ffb0b8}
+  #plist div i{color:var(--dim);font-style:normal;display:inline-block;width:26px}
+  #log{height:96px;overflow-y:auto;border:1px solid var(--line);border-radius:5px;background:#0b1016;
+    padding:5px 7px;font-family:ui-monospace,Consolas,monospace;font-size:10.5px;color:var(--dim)}
+  #log .e{color:var(--err)} #log .w{color:var(--warn)} #log .i{color:#7fd4ff}
+  #hud{position:absolute;left:10px;top:10px;pointer-events:none;font-family:ui-monospace,Consolas,monospace;
+    font-size:11.5px;background:rgba(9,13,19,.78);border:1px solid var(--line);border-radius:6px;padding:8px 11px;line-height:1.6}
+  #hud b{color:var(--acc);font-weight:600}
+  #vstat{position:absolute;right:10px;top:10px;font-size:11.5px;border-radius:6px;padding:6px 11px;
+    font-family:ui-monospace,Consolas,monospace;border:1px solid;max-width:300px}
+  #vstat.ok{background:rgba(14,48,30,.85);border-color:#2b6b45;color:#9bf0c0}
+  #vstat.warn{background:rgba(62,44,12,.85);border-color:#7d5c1c;color:#ffd58f}
+  #vstat.err{background:rgba(64,18,25,.88);border-color:#84303c;color:#ffaab3}
+  #hint{position:absolute;left:10px;bottom:10px;font-size:11px;color:#5f6d80;font-family:ui-monospace,monospace}
+  table{width:100%;border-collapse:collapse;font-size:11.5px}
+  th,td{text-align:left;padding:4px 5px;border-bottom:1px solid #1d2533;vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  code{font-family:ui-monospace,Consolas,monospace;color:#8fe3b0;background:#0e1620;padding:1px 4px;border-radius:3px}
+  .note{font-size:11.5px;color:var(--dim);background:#101722;border-left:2px solid var(--acc);padding:7px 9px;border-radius:0 4px 4px 0;margin:8px 0}
+  .kv{display:flex;justify-content:space-between;font-family:ui-monospace,monospace;font-size:11px;
+    padding:2px 0;border-bottom:1px solid #1a2230}
+  .kv b{color:var(--acc);font-weight:500}
+  ::-webkit-scrollbar{width:9px;height:9px}
+  ::-webkit-scrollbar-thumb{background:#2b3purple;background:#2b3547;border-radius:5px}
+  ::-webkit-scrollbar-track{background:#0c1118}
+</style>
+</head>
+<body>
+
+<div id="top">
+  <h1>Hexapod Simulator <span>· 6 DOF + Rotary Head (W)</span></h1>
+  <div id="status">Idle</div>
+</div>
+
+<div id="main">
+  <!-- ============ LEFT ============ -->
+  <div class="col" id="left">
+    <div id="tabs">
+      <div class="tab on" data-p="manual">Manual</div>
+      <div class="tab" data-p="prog">G-Code</div>
+      <div class="tab" data-p="geo">Machine</div>
+      <div class="tab" data-p="docs">Docs</div>
+    </div>
+
+    <!-- MANUAL -->
+    <div class="pane on" id="p-manual">
+      <h3>Platform Pose (jog)</h3>
+      <div class="row"><label><b>X</b> mm</label><input type="range" id="sX"><input type="number" id="nX" step="1"></div>
+      <div class="row"><label><b>Y</b> mm</label><input type="range" id="sY"><input type="number" id="nY" step="1"></div>
+      <div class="row"><label><b>Z</b> mm</label><input type="range" id="sZ"><input type="number" id="nZ" step="1"></div>
+      <div class="row"><label><b>A</b> roll°</label><input type="range" id="sA"><input type="number" id="nA" step=".5"></div>
+      <div class="row"><label><b>B</b> pitch°</label><input type="range" id="sB"><input type="number" id="nB" step=".5"></div>
+      <div class="row"><label><b>C</b> yaw°</label><input type="range" id="sC"><input type="number" id="nC" step=".5"></div>
+      <h3>7th Axis — Rotary Head</h3>
+      <div class="row"><label><b>W</b> head°</label><input type="range" id="sW"><input type="number" id="nW" step="1"></div>
+      <div class="note">The head is a turntable mounted on the moving platform. Its axis is the platform normal, so <code>W</code> is
+      kinematically decoupled from the six legs — it never changes a leg length.</div>
+      <div class="btnrow">
+        <button class="p" id="bHome">⌂ Home (G28)</button>
+        <button id="bZero">Zero rotations</button>
+      </div>
+      <label class="chk"><input type="checkbox" id="cBlock" checked> Block illegal poses (auto-revert)</label>
+      <label class="chk"><input type="checkbox" id="cTrace"> Draw platform-centre trace</label>
+      <label class="chk"><input type="checkbox" id="cGhost" checked> Show home ghost</label>
+      <h3>View</h3>
+      <div class="btnrow">
+        <button id="vIso">Iso</button><button id="vFront">Front</button>
+        <button id="vSide">Side</button><button id="vTop">Top</button>
+        <button id="bClear">Clear trace</button>
+      </div>
+    </div>
+
+    <!-- PROGRAM -->
+    <div class="pane" id="p-prog">
+      <h3>Program</h3>
+      <textarea id="gcode" spellcheck="false"></textarea>
+      <div class="btnrow">
+        <button class="p" id="bCompile">⟳ Compile</button>
+        <button id="bLoad">Open…</button>
+        <button id="bSave">Save</button>
+        <button id="bDemo">Load demo</button>
+        <input type="file" id="fIn" accept=".nc,.gcode,.txt,.tap" hidden>
+      </div>
+      <h3>Transport</h3>
+      <div class="btnrow">
+        <button class="p" id="bPlay">▶ Play</button>
+        <button id="bStep">⤼ Step</button>
+        <button class="d" id="bStop">■ Stop</button>
+      </div>
+      <div class="row"><label>Speed</label><input type="range" id="sSpeed" min="0.1" max="8" step="0.1" value="1">
+        <input type="number" id="nSpeed" step=".1" value="1"></div>
+      <label class="chk"><input type="checkbox" id="cLoop"> Loop program</label>
+      <h3>Compiled Blocks</h3>
+      <div id="plist"></div>
+      <h3>Console</h3>
+      <div id="log"></div>
+    </div>
+
+    <!-- GEOMETRY -->
+    <div class="pane" id="p-geo">
+      <h3>Joint Geometry</h3>
+      <div class="g2">
+        <div class="fld"><span>Base joint radius (mm)</span><input type="number" id="gBR" value="250"></div>
+        <div class="fld"><span>Platform joint radius (mm)</span><input type="number" id="gPR" value="150"></div>
+        <div class="fld"><span>Base pair separation (°)</span><input type="number" id="gBS" value="30"></div>
+        <div class="fld"><span>Platform pair separation (°)</span><input type="number" id="gPS" value="60"></div>
+      </div>
+      <h3>Actuators</h3>
+      <div class="g2">
+        <div class="fld"><span>Min length / retracted (mm)</span><input type="number" id="gLmin" value="300"></div>
+        <div class="fld"><span>Max length / extended (mm)</span><input type="number" id="gLmax" value="450"></div>
+      </div>
+      <h3>Limits</h3>
+      <div class="g2">
+        <div class="fld"><span>Ball-joint deflection max (°)</span><input type="number" id="gJoint" value="35"></div>
+        <div class="fld"><span>Leg-to-leg clearance (mm)</span><input type="number" id="gClr" value="36"></div>
+        <div class="fld"><span>Rapid linear (mm/s)</span><input type="number" id="gRapL" value="180"></div>
+        <div class="fld"><span>Rapid rotary (°/s)</span><input type="number" id="gRapR" value="60"></div>
+        <div class="fld"><span>Head rapid (°/s)</span><input type="number" id="gRapW" value="180"></div>
+        <div class="fld"><span>1° ≡ n mm (feed blend)</span><input type="number" id="gDegMm" value="1" step=".1"></div>
+      </div>
+      <div class="btnrow"><button class="p" id="bApply">Apply geometry</button><button id="bReset">Restore defaults</button></div>
+      <h3>Derived</h3>
+      <div id="derived"></div>
+    </div>
+
+    <!-- DOCS -->
+    <div class="pane" id="p-docs">
+      <h3>Coordinate System</h3>
+      <div class="note"><b>Datum (Z0) = fully retracted.</b> All six legs at minimum length, platform parallel to the base.
+      Because no leg can shorten below that, <b>every</b> tilt or lateral move from Z0 is illegal — raise Z first.
+      The demo program does this on its second line.</div>
+      <table>
+        <tr><th>Item</th><th>Convention</th></tr>
+        <tr><td>Origin</td><td>Centre of the base joint circle, Z up</td></tr>
+        <tr><td>Platform point</td><td>Centre of the platform joint circle</td></tr>
+        <tr><td>X Y Z</td><td>Platform-centre translation, mm, from the retracted datum</td></tr>
+        <tr><td>A B C</td><td>Roll (X), Pitch (Y), Yaw (Z), degrees</td></tr>
+        <tr><td>Rotation order</td><td>Intrinsic Z-Y-X: <code>R = Rz(C)·Ry(B)·Rx(A)</code>, about the platform centre</td></tr>
+        <tr><td>W</td><td>7th axis: rotary head on the platform, spins about the platform normal, continuous</td></tr>
+        <tr><td>Solver</td><td>Inverse kinematics only (pose → 6 leg lengths)</td></tr>
+        <tr><td>Interpolation</td><td>Cartesian space — pose parameters interpolate linearly, leg lengths follow non-linearly</td></tr>
+      </table>
+
+      <h3>Supported G-Code</h3>
+      <table>
+        <tr><th>Code</th><th>Meaning</th></tr>
+        <tr><td><code>G0</code></td><td>Rapid move to pose. Ignores F; uses the rapid rates from the Machine tab.</td></tr>
+        <tr><td><code>G1</code></td><td>Feed move at <code>F</code>. Words: <code>X Y Z A B C W F</code>.</td></tr>
+        <tr><td><code>G2</code>/<code>G3</code></td><td>CW / CCW arc of the platform centre in the XY plane.
+          Centre given by <code>I J</code> (offset from start). <code>Z A B C W</code> interpolate linearly → helical/screw moves.
+          If the endpoint equals the start, a full 360° circle is produced.</td></tr>
+        <tr><td><code>G4 P&lt;s&gt;</code></td><td>Dwell, seconds (<code>P</code> in ms also accepted if &gt; 1000).</td></tr>
+        <tr><td><code>G20</code>/<code>G21</code></td><td>Inch / millimetre input. Angles are always degrees.</td></tr>
+        <tr><td><code>G28</code></td><td>Home: rapid to the fully-retracted datum, all axes zero.</td></tr>
+        <tr><td><code>G90</code>/<code>G91</code></td><td>Absolute / incremental. Applies to linear <i>and</i> angular words.</td></tr>
+        <tr><td><code>G92</code></td><td>Set work offset — redefines the current pose as the given values.</td></tr>
+        <tr><td><code>M0</code></td><td>Program pause (press Play to resume).</td></tr>
+        <tr><td><code>M2</code>/<code>M30</code></td><td>End of program.</td></tr>
+        <tr><td><code>F</code></td><td>Feed, mm/min (modal). Rotary-only moves use <code>F</code> °/min scaled by the 1°≡n mm factor.</td></tr>
+        <tr><td><code>;</code> <code>( )</code></td><td>Comments — to end of line, or bracketed.</td></tr>
+      </table>
+      <div class="note">Feed blending: a block's duration is
+      <code>max(d_lin, d_rot × k) / F</code> where <code>d_rot</code> is the largest angular delta of A/B/C/W and
+      <code>k</code> is the "1° ≡ n mm" factor. This is the common vendor approach — there is no ratified hexapod
+      G-code standard, so this dialect is documented rather than assumed.</div>
+
+      <h3>Validation</h3>
+      <p style="font-size:11.5px;color:var(--dim)">Compiling samples 24 points along every block and rejects the program
+      if any sample exceeds a leg stroke limit, a ball-joint deflection limit, or the leg-to-leg clearance. Offending
+      block numbers are listed in the console and highlighted red.</p>
+      <h3>Mouse</h3>
+      <p style="font-size:11.5px;color:var(--dim)">Drag = orbit · Wheel = zoom · Shift-drag or right-drag = pan.</p>
+    </div>
+  </div>
+
+  <!-- ============ CENTER ============ -->
+  <div id="center">
+    <canvas id="cv"></canvas>
+    <div id="hud"></div>
+    <div id="vstat" class="ok">OK</div>
+    <div id="hint">drag orbit · wheel zoom · shift-drag pan</div>
+  </div>
+
+  <!-- ============ RIGHT ============ -->
+  <div class="col" id="right">
+    <h3>Actuators</h3>
+    <div id="legs"></div>
+    <h3>Joint Deflection</h3>
+    <div id="joints"></div>
+    <h3>Head</h3>
+    <div id="headinfo"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   MATH
+   ========================================================================= */
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]];
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]];
+const mul=(a,s)=>[a[0]*s,a[1]*s,a[2]*s];
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+const vlen=a=>Math.sqrt(dot(a,a));
+const nrm=a=>{const l=vlen(a)||1;return mul(a,1/l);};
+const RAD=Math.PI/180, DEG=180/Math.PI;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const lerp=(a,b,t)=>a+(b-a)*t;
+
+function eulerZYX(A,B,C){ // R = Rz(C)·Ry(B)·Rx(A)
+  const ca=Math.cos(A*RAD), sa=Math.sin(A*RAD);
+  const cb=Math.cos(B*RAD), sb=Math.sin(B*RAD);
+  const cc=Math.cos(C*RAD), sc=Math.sin(C*RAD);
+  return [[cc*cb, cc*sb*sa-sc*ca, cc*sb*ca+sc*sa],
+          [sc*cb, sc*sb*sa+cc*ca, sc*sb*ca-cc*sa],
+          [  -sb,          cb*sa,          cb*ca]];
+}
+const mv=(M,v)=>[dot(M[0],v),dot(M[1],v),dot(M[2],v)];
+function mm(A,B){const R=[[0,0,0],[0,0,0],[0,0,0]];
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++)R[i][j]=A[i][0]*B[0][j]+A[i][1]*B[1][j]+A[i][2]*B[2][j];
+  return R;}
+function rotZ(d){const c=Math.cos(d*RAD),s=Math.sin(d*RAD);return [[c,-s,0],[s,c,0],[0,0,1]];}
+
+// shortest distance between two 3-D segments
+function segDist(p1,q1,p2,q2){
+  const d1=sub(q1,p1), d2=sub(q2,p2), r=sub(p1,p2);
+  const a=dot(d1,d1), e=dot(d2,d2), f=dot(d2,r);
+  let s,t;
+  if(a<1e-9&&e<1e-9) return vlen(r);
+  if(a<1e-9){s=0;t=clamp(f/e,0,1);}
+  else{ const c=dot(d1,r);
+    if(e<1e-9){t=0;s=clamp(-c/a,0,1);}
+    else{ const b=dot(d1,d2), den=a*e-b*b;
+      s = den>1e-9 ? clamp((b*f-c*e)/den,0,1) : 0;
+      t = (b*s+f)/e;
+      if(t<0){t=0;s=clamp(-c/a,0,1);} else if(t>1){t=1;s=clamp((b-c)/a,0,1);}
+    }}
+  return vlen(sub(add(p1,mul(d1,s)),add(p2,mul(d2,t))));
+}
+
+/* =========================================================================
+   MACHINE MODEL
+   ========================================================================= */
+const DEFAULTS={BR:250,PR:150,BS:30,PS:60,Lmin:300,Lmax:450,joint:35,clr:36,rapL:180,rapR:60,rapW:180,degmm:1};
+const G=Object.assign({},DEFAULTS);
+let basePts=[], platLocal=[], homeDir=[], zHome=0, zMax=0, LIM={};
+
+function buildGeometry(){
+  basePts=[];platLocal=[];
+  for(let i=0;i<6;i++){
+    const k=Math.floor(i/2), s=(i%2)?1:-1;
+    const ab=(120*k + s*G.BS/2)*RAD, ap=(120*k + s*G.PS/2)*RAD;
+    basePts.push([G.BR*Math.cos(ab), G.BR*Math.sin(ab), 0]);
+    platLocal.push([G.PR*Math.cos(ap), G.PR*Math.sin(ap), 0]);
+  }
+  // retracted datum height: all legs at Lmin, platform parallel & centred
+  const d = vlen(sub([platLocal[0][0],platLocal[0][1],0],[basePts[0][0],basePts[0][1],0]));
+  if(G.Lmin<=d){ zHome=NaN; }
+  zHome=Math.sqrt(Math.max(0,G.Lmin*G.Lmin-d*d));
+  zMax =Math.sqrt(Math.max(0,G.Lmax*G.Lmax-d*d));
+  homeDir=basePts.map((b,i)=>nrm(sub(add([0,0,zHome],platLocal[i]),b)));
+  const zt=zMax-zHome;
+  LIM={ X:[-zt*1.1,zt*1.1], Y:[-zt*1.1,zt*1.1], Z:[0,zt],
+        A:[-30,30], B:[-30,30], C:[-40,40], W:[-360,360] };
+  window.__d=d;
+}
+
+let pose={X:0,Y:0,Z:0,A:0,B:0,C:0,W:0};
+let lastGood=Object.assign({},pose);
+
+function solveIK(p){
+  const R=eulerZYX(p.A,p.B,p.C);
+  const T=[p.X,p.Y,zHome+p.Z];
+  const legs=[];
+  for(let i=0;i<6;i++){
+    const top=add(T,mv(R,platLocal[i]));
+    const v=sub(top,basePts[i]), L=vlen(v), u=mul(v,1/(L||1));
+    legs.push({i,L,top,base:basePts[i],u,
+      stroke:(L-G.Lmin)/((G.Lmax-G.Lmin)||1),
+      baseDefl:DEG*Math.acos(clamp(dot(u,homeDir[i]),-1,1)),
+      platDefl:DEG*Math.acos(clamp(dot(u,mv(R,homeDir[i])),-1,1))});
+  }
+  return {legs,R,T,normal:mv(R,[0,0,1]),
+          head:mm(R,rotZ(p.W))};
+}
+
+function validate(k){
+  const errs=[],warns=[];
+  for(const l of k.legs){
+    if(l.L<G.Lmin-1e-6) errs.push(`Leg ${l.i+1} short: ${l.L.toFixed(1)} < ${G.Lmin}`);
+    else if(l.L>G.Lmax+1e-6) errs.push(`Leg ${l.i+1} long: ${l.L.toFixed(1)} > ${G.Lmax}`);
+    else if(l.stroke<0.02||l.stroke>0.98) warns.push(`Leg ${l.i+1} near stroke end`);
+    const dm=Math.max(l.baseDefl,l.platDefl);
+    if(dm>G.joint) errs.push(`Leg ${l.i+1} joint ${dm.toFixed(1)}° > ${G.joint}°`);
+    else if(dm>G.joint*0.88) warns.push(`Leg ${l.i+1} joint near limit`);
+  }
+  for(let i=0;i<6;i++)for(let j=i+1;j<6;j++){
+    const dd=segDist(k.legs[i].base,k.legs[i].top,k.legs[j].base,k.legs[j].top);
+    if(dd<G.clr){ (dd<G.clr*0.75?errs:warns).push(`Legs ${i+1}/${j+1} clearance ${dd.toFixed(1)}mm`);}
+  }
+  return {ok:!errs.length,errs,warns};
+}
+
+/* =========================================================================
+   RENDERER  (dependency-free Canvas2D 3-D pipeline, painter sorted)
+   ========================================================================= */
+const cv=document.getElementById('cv'), cx=cv.getContext('2d');
+let Wp=0,Hp=0,DPR=1;
+const cam={az:-55,el:24,dist:1500,tgt:[0,0,160],fov:42};
+
+function resize(){
+  DPR=window.devicePixelRatio||1;
+  Wp=cv.clientWidth;Hp=cv.clientHeight;
+  cv.width=Wp*DPR;cv.height=Hp*DPR;
+  cx.setTransform(DPR,0,0,DPR,0,0);
+}
+new ResizeObserver(resize).observe(cv);
+
+let EYE,RGT,UPV,FWD,FOC;
+function setupCam(){
+  const a=cam.az*RAD,e=cam.el*RAD;
+  EYE=add(cam.tgt,[cam.dist*Math.cos(e)*Math.cos(a),cam.dist*Math.cos(e)*Math.sin(a),cam.dist*Math.sin(e)]);
+  FWD=nrm(sub(cam.tgt,EYE));
+  RGT=nrm(cross(FWD,[0,0,1]));
+  UPV=cross(RGT,FWD);
+  FOC=(Hp/2)/Math.tan(cam.fov*RAD/2);
+}
+function proj(p){
+  const d=sub(p,EYE), z=dot(d,FWD);
+  if(z<1) return null;
+  return [Wp/2+FOC*dot(d,RGT)/z, Hp/2-FOC*dot(d,UPV)/z, z];
+}
+const LIGHT=nrm([0.4,0.55,0.75]);
+let FACES=[];
+function shade(col,n){
+  const l=0.34+0.66*Math.max(0,dot(nrm(n),LIGHT));
+  return `rgb(${Math.round(col[0]*l)},${Math.round(col[1]*l)},${Math.round(col[2]*l)})`;
+}
+function poly(pts,col,n,stroke){
+  const sp=pts.map(proj); if(sp.some(p=>!p))return;
+  FACES.push({z:sp.reduce((s,p)=>s+p[2],0)/sp.length,sp,
+    f:n?shade(col,n):`rgb(${col[0]},${col[1]},${col[2]})`,s:stroke||null,w:1});
+}
+function line(a,b,col,w){
+  const p=proj(a),q=proj(b); if(!p||!q)return;
+  FACES.push({z:(p[2]+q[2])/2,sp:[p,q],f:null,s:col,w:w||1,ln:true});
+}
+function label(p,txt,col){
+  const s=proj(p); if(!s)return;
+  FACES.push({z:s[2]-40,txt,sp:[s],s:col||'#8b99ad'});
+}
+function tube(p0,p1,r,col,sides){
+  sides=sides||10;
+  const ax=nrm(sub(p1,p0));
+  let t=Math.abs(ax[2])>0.9?[1,0,0]:[0,0,1];
+  const u=nrm(cross(ax,t)), v=cross(ax,u);
+  const ring=a=>{const c=Math.cos(a),s=Math.sin(a);return add(mul(u,r*c),mul(v,r*s));};
+  for(let i=0;i<sides;i++){
+    const a0=i/sides*2*Math.PI, a1=(i+1)/sides*2*Math.PI;
+    const o0=ring(a0), o1=ring(a1);
+    poly([add(p0,o0),add(p1,o0),add(p1,o1),add(p0,o1)],col,nrm(add(o0,o1)));
+  }
+}
+function disc(c,nv,r,col,sides,flip){
+  sides=sides||36;
+  let t=Math.abs(nv[2])>0.9?[1,0,0]:[0,0,1];
+  const u=nrm(cross(nv,t)), v=cross(nv,u), pts=[];
+  for(let i=0;i<sides;i++){const a=i/sides*2*Math.PI;
+    pts.push(add(c,add(mul(u,r*Math.cos(a)),mul(v,r*Math.sin(a)))));}
+  poly(flip?pts.reverse():pts,col,flip?mul(nv,-1):nv);
+  return pts;
+}
+function plate(c,nv,r,th,colTop,colSide,sides){
+  sides=sides||36;
+  const top=disc(add(c,mul(nv,th/2)),nv,r,colTop,sides);
+  const bot=disc(add(c,mul(nv,-th/2)),nv,r,colSide,sides,true);
+  for(let i=0;i<sides;i++){const j=(i+1)%sides;
+    poly([top[i],top[j],bot[j],bot[i]],colSide,nrm(sub(top[i],c)));}
+}
+function box(c,R,hx,hy,hz,col){
+  const P=(x,y,z)=>add(c,mv(R,[x*hx,y*hy,z*hz]));
+  const V=[P(-1,-1,-1),P(1,-1,-1),P(1,1,-1),P(-1,1,-1),P(-1,-1,1),P(1,-1,1),P(1,1,1),P(-1,1,1)];
+  const F=[[4,5,6,7,[0,0,1]],[1,0,3,2,[0,0,-1]],[0,1,5,4,[0,-1,0]],[2,3,7,6,[0,1,0]],
+           [1,2,6,5,[1,0,0]],[3,0,4,7,[-1,0,0]]];
+  for(const f of F) poly([V[f[0]],V[f[1]],V[f[2]],V[f[3]]],col,mv(R,f[4]));
+}
+
+let trace=[];
+const COL={base:[62,74,92],baseTop:[78,92,112],plat:[46,96,140],platTop:[62,126,180],
+  head:[150,110,40],headTop:[205,158,55],rod:[168,178,192],cyl:[96,106,122],tool:[220,80,90]};
+function legColor(s,bad){
+  if(bad) return [235,70,85];
+  if(s<0.06||s>0.94) return [235,150,60];
+  return COL.rod;
+}
+
+function render(){
+  setupCam(); FACES=[];
+  const k=solveIK(pose), val=validate(k);
+
+  // ---- ground grid
+  const gl=Math.max(G.BR*1.8,400), st=gl/8;
+  for(let i=-8;i<=8;i++){
+    const c=(i===0)?'#26303f':'#19202b';
+    line([i*st,-gl,0],[i*st,gl,0],c,1);
+    line([-gl,i*st,0],[gl,i*st,0],c,1);
+  }
+  // ---- base plate + joints
+  plate([0,0,-9],[0,0,1],G.BR*1.16,18,COL.baseTop,COL.base,40);
+  for(const b of basePts) plate(add(b,[0,0,6]),[0,0,1],20,12,[120,132,150],[86,96,112],12);
+
+  // ---- home ghost
+  if(document.getElementById('cGhost').checked){
+    for(let i=0;i<6;i++){
+      const top=add([0,0,zHome],platLocal[i]);
+      line(basePts[i],top,'rgba(90,110,135,.32)',1);
+    }
+    for(let i=0;i<6;i++){
+      const a=add([0,0,zHome],platLocal[i]), b=add([0,0,zHome],platLocal[(i+1)%6]);
+      line(a,b,'rgba(90,110,135,.32)',1);
+    }
+  }
+
+  // ---- legs
+  for(const l of k.legs){
+    const bad=l.L<G.Lmin-1e-6||l.L>G.Lmax+1e-6||Math.max(l.baseDefl,l.platDefl)>G.joint;
+    const cyLen=G.Lmin*0.62;
+    const mid=add(l.base,mul(l.u,Math.min(cyLen,l.L)));
+    tube(add(l.base,mul(l.u,10)),mid,15,COL.cyl,10);       // cylinder body
+    tube(mid,l.top,8.5,legColor(l.stroke,bad),9);           // extending rod
+    plate(l.top,l.u,17,10,[120,132,150],[86,96,112],12);    // upper ball joint
+  }
+
+  // ---- moving platform (hexagon prism through the 6 joints)
+  const nv=k.normal, ctr=k.T;
+  const hex=k.legs.map(l=>l.top);
+  const th=16;
+  const up=mul(nv,th/2), dn=mul(nv,-th/2);
+  poly(hex.map(p=>add(p,up)),COL.platTop,nv);
+  poly(hex.map(p=>add(p,dn)).reverse(),COL.plat,mul(nv,-1));
+  for(let i=0;i<6;i++){const j=(i+1)%6;
+    poly([add(hex[i],up),add(hex[j],up),add(hex[j],dn),add(hex[i],dn)],COL.plat,nrm(sub(hex[i],ctr)));}
+
+  // ---- 7th axis: rotary head on the platform
+  const hb=add(ctr,mul(nv,th/2));
+  plate(add(hb,mul(nv,7)),nv,G.PR*0.30,14,[70,82,100],[54,64,80],26);   // bearing race
+  const hc=add(hb,mul(nv,26));
+  plate(hc,nv,G.PR*0.62,22,COL.headTop,COL.head,30);                    // turntable
+  const HR=k.head;
+  // keyed marker + index notch, both rotate with W
+  box(add(hc,mv(HR,[G.PR*0.44,0,16])),HR,26,11,8,[235,205,120]);
+  box(add(hc,mv(HR,[0,G.PR*0.44,16])),HR,9,9,7,[120,132,150]);
+  // tool spike along the head axis
+  const tp=add(hc,mul(nv,16));
+  tube(tp,add(tp,mul(nv,54)),7,[110,120,136],9);
+  tube(add(tp,mul(nv,54)),add(tp,mul(nv,84)),3,COL.tool,8);
+  // head rotation arc indicator
+  {
+    const u=nrm(mv(HR,[1,0,0])), v=nrm(mv(HR,[0,1,0]));
+    let prev=null;
+    for(let a=0;a<=360;a+=12){
+      const r=G.PR*0.72;
+      const p=add(add(hc,mul(nv,14)),add(mul(u,r*Math.cos(a*RAD)),mul(v,r*Math.sin(a*RAD))));
+      if(prev) line(prev,p,'rgba(205,158,55,.35)',1);
+      prev=p;
+    }
+  }
+
+  // ---- triads
+  const AX=[[220,70,80],[110,215,110],[90,160,255]], nm=['X','Y','Z'];
+  for(let i=0;i<3;i++){
+    const d=[0,0,0];d[i]=1;
+    line([0,0,2],mul(d,G.BR*0.72),`rgb(${AX[i]})`,2);
+    label(mul(d,G.BR*0.8),nm[i],`rgb(${AX[i]})`);
+    const pd=mv(k.R,d);
+    line(ctr,add(ctr,mul(pd,110)),`rgba(${AX[i]},.85)`,2);
+  }
+  // vertical datum line
+  line([pose.X,pose.Y,0],ctr,'rgba(63,182,255,.3)',1);
+
+  // ---- trace
+  if(trace.length>1){
+    for(let i=1;i<trace.length;i++) line(trace[i-1],trace[i],'rgba(63,182,255,.75)',1.6);
+  }
+
+  // ---- draw sorted
+  FACES.sort((a,b)=>b.z-a.z);
+  cx.clearRect(0,0,Wp,Hp);
+  const g=cx.createLinearGradient(0,0,0,Hp);
+  g.addColorStop(0,'#0c1219');g.addColorStop(1,'#05080c');
+  cx.fillStyle=g;cx.fillRect(0,0,Wp,Hp);
+  cx.lineJoin='round';
+  for(const f of FACES){
+    if(f.txt){cx.font='11px ui-monospace,monospace';cx.fillStyle=f.s;cx.fillText(f.txt,f.sp[0][0]+3,f.sp[0][1]);continue;}
+    if(f.ln){cx.beginPath();cx.moveTo(f.sp[0][0],f.sp[0][1]);cx.lineTo(f.sp[1][0],f.sp[1][1]);
+      cx.strokeStyle=f.s;cx.lineWidth=f.w;cx.stroke();continue;}
+    cx.beginPath();cx.moveTo(f.sp[0][0],f.sp[0][1]);
+    for(let i=1;i<f.sp.length;i++)cx.lineTo(f.sp[i][0],f.sp[i][1]);
+    cx.closePath();cx.fillStyle=f.f;cx.fill();
+    cx.strokeStyle='rgba(0,0,0,.35)';cx.lineWidth=.7;cx.stroke();
+  }
+  updatePanels(k,val);
+}
+
+/* mouse nav */
+let drag=null;
+cv.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===2};e.preventDefault();});
+window.addEventListener('mouseup',()=>drag=null);
+window.addEventListener('mousemove',e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+  drag.x=e.clientX;drag.y=e.clientY;
+  if(drag.pan){
+    const s=cam.dist/900;
+    cam.tgt=add(cam.tgt,add(mul(RGT,-dx*s),mul(UPV,dy*s)));
+  }else{
+    cam.az+=dx*0.4; cam.el=clamp(cam.el-dy*0.35,-88,88);
+  }
+  render();
+});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('wheel',e=>{cam.dist=clamp(cam.dist*(1+Math.sign(e.deltaY)*0.09),300,6000);render();e.preventDefault();},{passive:false});
+
+/* =========================================================================
+   PANELS
+   ========================================================================= */
+const $=id=>document.getElementById(id);
+function updatePanels(k,val){
+  $('hud').innerHTML =
+    `<b>X</b> ${pose.X.toFixed(2).padStart(8)}  <b>A</b> ${pose.A.toFixed(2).padStart(7)}°<br>`+
+    `<b>Y</b> ${pose.Y.toFixed(2).padStart(8)}  <b>B</b> ${pose.B.toFixed(2).padStart(7)}°<br>`+
+    `<b>Z</b> ${pose.Z.toFixed(2).padStart(8)}  <b>C</b> ${pose.C.toFixed(2).padStart(7)}°<br>`+
+    `<b>W</b> ${pose.W.toFixed(2).padStart(8)}°  (head)<br>`+
+    `<span style="color:#8b99ad">abs Z ${(zHome+pose.Z).toFixed(1)} mm</span>`;
+  const vs=$('vstat');
+  if(!val.ok){vs.className='err';vs.textContent='⛔ '+val.errs[0]+(val.errs.length>1?`  (+${val.errs.length-1})`:'');}
+  else if(val.warns.length){vs.className='warn';vs.textContent='⚠ '+val.warns[0]+(val.warns.length>1?`  (+${val.warns.length-1})`:'');}
+  else {vs.className='ok';vs.textContent='✓ Pose reachable';}
+
+  let h='';
+  for(const l of k.legs){
+    const pct=clamp(l.stroke,0,1)*100;
+    const bad=l.L<G.Lmin-1e-6||l.L>G.Lmax+1e-6;
+    const c=bad?'var(--err)':(pct<6||pct>94)?'var(--warn)':'var(--ok)';
+    h+=`<div class="leg"><div class="hd"><span>L${l.i+1}</span>
+      <span style="color:${c}">${l.L.toFixed(2)} mm</span></div>
+      <div class="bar"><i style="width:${pct.toFixed(1)}%;background:${c}"></i></div>
+      <div style="color:var(--dim);font-size:10px">stroke ${(l.L-G.Lmin).toFixed(1)} · ${pct.toFixed(0)}%</div></div>`;
+  }
+  $('legs').innerHTML=h;
+  $('joints').innerHTML=k.legs.map(l=>{
+    const d=Math.max(l.baseDefl,l.platDefl);
+    const c=d>G.joint?'var(--err)':d>G.joint*0.88?'var(--warn)':'var(--ok)';
+    return `<div class="kv"><span>J${l.i+1}</span><b style="color:${c}">${d.toFixed(1)}°</b></div>`;
+  }).join('');
+  const nv=k.normal;
+  $('headinfo').innerHTML=
+    `<div class="kv"><span>W angle</span><b>${pose.W.toFixed(2)}°</b></div>`+
+    `<div class="kv"><span>axis tilt</span><b>${(DEG*Math.acos(clamp(nv[2],-1,1))).toFixed(2)}°</b></div>`+
+    `<div class="kv"><span>axis vec</span><b>${nv.map(v=>v.toFixed(3)).join(' ')}</b></div>`;
+}
+function updateDerived(){
+  $('derived').innerHTML=
+    `<div class="kv"><span>joint h-offset</span><b>${window.__d.toFixed(2)} mm</b></div>`+
+    `<div class="kv"><span>datum height (Z0)</span><b>${zHome.toFixed(2)} mm</b></div>`+
+    `<div class="kv"><span>max height</span><b>${zMax.toFixed(2)} mm</b></div>`+
+    `<div class="kv"><span>Z travel</span><b>${(zMax-zHome).toFixed(2)} mm</b></div>`+
+    `<div class="kv"><span>stroke</span><b>${(G.Lmax-G.Lmin).toFixed(1)} mm</b></div>`;
+}
+
+/* ---- jog controls ---- */
+const AX7=['X','Y','Z','A','B','C','W'];
+function syncSliders(){
+  for(const a of AX7){
+    const s=$('s'+a),n=$('n'+a),[lo,hi]=LIM[a];
+    s.min=lo;s.max=hi;s.step=(a==='X'||a==='Y'||a==='Z')?0.5:0.25;
+    s.value=clamp(pose[a],lo,hi); n.value=(+pose[a]).toFixed(2);
+  }
+}
+function setPose(p,noTrace){
+  const prev=Object.assign({},pose);
+  pose=Object.assign({},pose,p);
+  const val=validate(solveIK(pose));
+  if(!val.ok && $('cBlock').checked && !RUN.active){
+    pose=lastGood.__ok?Object.assign({},lastGood):prev;
+    logMsg('e','Illegal pose blocked: '+val.errs[0]);
+    syncSliders();render();return false;
+  }
+  if(val.ok){lastGood=Object.assign({},pose);lastGood.__ok=true;}
+  if(!noTrace&&$('cTrace').checked){
+    const k=solveIK(pose);
+    trace.push(k.T); if(trace.length>4000)trace.shift();
+  }
+  syncSliders();render();return val.ok;
+}
+for(const a of AX7){
+  $('s'+a).addEventListener('input',e=>setPose({[a]:+e.target.value}));
+  $('n'+a).addEventListener('change',e=>setPose({[a]:+e.target.value}));
+}
+$('bHome').onclick=()=>{setPose({X:0,Y:0,Z:0,A:0,B:0,C:0,W:0});};
+$('bZero').onclick=()=>setPose({A:0,B:0,C:0});
+$('bClear').onclick=()=>{trace=[];render();};
+$('cTrace').onchange=render; $('cGhost').onchange=render;
+$('vIso').onclick=()=>{cam.az=-55;cam.el=24;render();};
+$('vFront').onclick=()=>{cam.az=-90;cam.el=2;render();};
+$('vSide').onclick=()=>{cam.az=0;cam.el=2;render();};
+$('vTop').onclick=()=>{cam.az=-90;cam.el=87;render();};
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('on'));
+  t.classList.add('on'); $('p-'+t.dataset.p).classList.add('on');
+});
+
+/* ---- geometry ---- */
+const GKEYS={gBR:'BR',gPR:'PR',gBS:'BS',gPS:'PS',gLmin:'Lmin',gLmax:'Lmax',
+  gJoint:'joint',gClr:'clr',gRapL:'rapL',gRapR:'rapR',gRapW:'rapW',gDegMm:'degmm'};
+$('bApply').onclick=()=>{
+  for(const id in GKEYS){const v=parseFloat($(id).value); if(isFinite(v))G[GKEYS[id]]=v;}
+  if(G.Lmax<=G.Lmin){G.Lmax=G.Lmin+50;$('gLmax').value=G.Lmax;logMsg('w','Lmax raised above Lmin');}
+  buildGeometry();
+  if(!isFinite(zHome)||zHome<=0){logMsg('e','Lmin too short for this joint offset — geometry invalid');}
+  pose={X:0,Y:0,Z:0,A:0,B:0,C:0,W:0};lastGood=Object.assign({__ok:true},pose);
+  trace=[];PROG=[];renderProg();updateDerived();syncSliders();render();
+  logMsg('i',`Geometry applied · datum Z0 at ${zHome.toFixed(1)} mm · Z travel ${(zMax-zHome).toFixed(1)} mm`);
+};
+$('bReset').onclick=()=>{Object.assign(G,DEFAULTS);
+  for(const id in GKEYS)$(id).value=G[GKEYS[id]]; $('bApply').click();};
+
+/* =========================================================================
+   G-CODE
+   ========================================================================= */
+function logMsg(t,m){
+  const l=$('log'); const d=document.createElement('div');
+  d.className=t; d.textContent=m; l.appendChild(d); l.scrollTop=l.scrollHeight;
+  while(l.childNodes.length>300)l.removeChild(l.firstChild);
+}
+const DEMO=
+`; ================================================================
+;  Hexapod demo — 6 DOF + rotary head (W)
+;  Datum Z0 = fully retracted, so raise Z before any tilt.
+; ================================================================
+G21 G90              ; millimetres, absolute
+G28                  ; home to retracted datum
+
+G1 Z70 F4000         ; lift into the workspace first
+
+; --- roll / pitch sweep -------------------------------------------
+G1 A8 F1800
+G1 A-8
+G1 A0 B8
+G1 B-8
+G1 B0
+
+; --- yaw (legs) vs head (7th axis) --------------------------------
+G1 C14 F1800         ; platform yaw : moves all six legs
+G1 C-14
+G1 C0
+G1 W180 F4000        ; head yaw     : legs stay put
+G1 W-180
+G1 W0
+
+; --- helical screw: circle in XY while rising and spinning the head
+G1 X45 Y0 Z70 F3000
+G2 X45 Y0 I-45 J0 Z100 W360 F2200   ; full CW circle, +30 Z, +360 head
+
+; --- compound pose, then a dwell ----------------------------------
+G1 X0 Y0 Z95 A6 B-6 C10 W45 F2500
+G4 P0.6
+
+G0 Z40               ; rapid down
+G28                  ; back to datum
+M30
+`;
+$('gcode').value=DEMO;
+$('bDemo').onclick=()=>{$('gcode').value=DEMO;$('bCompile').click();};
+$('bLoad').onclick=()=>$('fIn').click();
+$('fIn').onchange=e=>{const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{$('gcode').value=r.result;$('bCompile').click();};r.readAsText(f);};
+$('bSave').onclick=()=>{
+  const b=new Blob([$('gcode').value],{type:'text/plain'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='hexapod.nc';a.click();};
+
+let PROG=[];
+function parseGcode(src){
+  const out=[],errs=[];
+  let abs=true, unit=1, feed=2000, mode=1;
+  const cur={X:0,Y:0,Z:0,A:0,B:0,C:0,W:0};
+  const lines=src.split(/\r?\n/);
+  lines.forEach((raw,li)=>{
+    let s=raw.replace(/\([^)]*\)/g,' ').replace(/;.*$/,'').trim();
+    if(!s) return;
+    const words=[...s.toUpperCase().matchAll(/([A-Z])\s*(-?\d*\.?\d+)/g)].map(m=>[m[1],parseFloat(m[2])]);
+    if(!words.length){errs.push(`Line ${li+1}: unparsable "${raw.trim()}"`);return;}
+    const w={}; let gs=[], ms=[];
+    for(const [L,V] of words){
+      if(L==='G')gs.push(V); else if(L==='M')ms.push(V); else w[L]=V;
+    }
+    // modal settings first
+    for(const g of gs){
+      if(g===20)unit=25.4; else if(g===21)unit=1;
+      else if(g===90)abs=true; else if(g===91)abs=false;
+    }
+    if('F' in w) feed=w.F;
+    const motion=gs.find(g=>g===0||g===1||g===2||g===3);
+    if(motion!==undefined) mode=motion;
+
+    const lin=k=>k==='X'||k==='Y'||k==='Z';
+    function target(){
+      const t=Object.assign({},cur);
+      for(const k of AX7){ if(!(k in w))continue;
+        const v=lin(k)?w[k]*unit:w[k];
+        t[k]= abs? v : cur[k]+v;
+      }
+      return t;
+    }
+    const src_txt=raw.trim();
+
+    for(const g of gs){
+      if(g===4){
+        let p=('P' in w)?w.P:(('S' in w)?w.S:0);
+        if(p>1000)p/=1000;
+        out.push({line:li+1,txt:src_txt,type:'dwell',sec:Math.max(0,p)});
+      } else if(g===28){
+        const t={X:0,Y:0,Z:0,A:0,B:0,C:0,W:0};
+        out.push({line:li+1,txt:src_txt,type:'move',from:Object.assign({},cur),to:t,rapid:true,arc:null});
+        Object.assign(cur,t);
+      } else if(g===92){
+        const t=target(); Object.assign(cur,t);
+        out.push({line:li+1,txt:src_txt,type:'offset',to:Object.assign({},t)});
+      }
+    }
+    for(const m of ms){
+      if(m===0||m===1) out.push({line:li+1,txt:src_txt,type:'pause'});
+      else if(m===2||m===30) out.push({line:li+1,txt:src_txt,type:'end'});
+    }
+    const hasAxisWord=AX7.some(k=>k in w);
+    if(hasAxisWord && !gs.some(g=>g===4||g===28||g===92)){
+      const t=target();
+      let arc=null;
+      if(mode===2||mode===3){
+        const I=('I' in w? w.I*unit:0), J=('J' in w? w.J*unit:0);
+        if(I===0&&J===0){errs.push(`Line ${li+1}: G${mode} needs I and/or J`);}
+        else{
+          const c=[cur.X+I,cur.Y+J];
+          const r0=Math.hypot(cur.X-c[0],cur.Y-c[1]);
+          const r1=Math.hypot(t.X-c[0],t.Y-c[1]);
+          if(Math.abs(r0-r1)>0.5) errs.push(`Line ${li+1}: arc radius mismatch ${r0.toFixed(2)}≠${r1.toFixed(2)}`);
+          let a0=Math.atan2(cur.Y-c[1],cur.X-c[0]), a1=Math.atan2(t.Y-c[1],t.X-c[0]);
+          let sw=a1-a0;
+          const cwise=(mode===2);
+          if(cwise){ while(sw>=0)sw-=2*Math.PI; if(sw<-2*Math.PI+1e-9)sw+=2*Math.PI; if(Math.abs(sw)<1e-9)sw=-2*Math.PI;}
+          else     { while(sw<=0)sw+=2*Math.PI; if(sw>2*Math.PI-1e-9)sw-=2*Math.PI; if(Math.abs(sw)<1e-9)sw= 2*Math.PI;}
+          arc={c,r:r0,a0,sw};
+        }
+      }
+      out.push({line:li+1,txt:src_txt,type:'move',from:Object.assign({},cur),
+        to:t,rapid:(mode===0),feed,arc});
+      Object.assign(cur,t);
+    }
+  });
+  return {cmds:out,errs};
+}
+
+function posAt(cmd,t){
+  const f=cmd.from,to=cmd.to, p={};
+  for(const k of AX7) p[k]=lerp(f[k],to[k],t);
+  if(cmd.arc){
+    const a=cmd.arc.a0+cmd.arc.sw*t;
+    p.X=cmd.arc.c[0]+cmd.arc.r*Math.cos(a);
+    p.Y=cmd.arc.c[1]+cmd.arc.r*Math.sin(a);
+  }
+  return p;
+}
+function duration(cmd){
+  const f=cmd.from,to=cmd.to;
+  let dl;
+  if(cmd.arc){
+    const arcl=Math.abs(cmd.arc.sw)*cmd.arc.r;
+    dl=Math.hypot(arcl,to.Z-f.Z);
+  } else dl=Math.hypot(to.X-f.X,to.Y-f.Y,to.Z-f.Z);
+  const dr=Math.max(...['A','B','C'].map(k=>Math.abs(to[k]-f[k])));
+  const dw=Math.abs(to.W-f.W);
+  if(cmd.rapid){
+    return Math.max(dl/G.rapL, dr/G.rapR, dw/G.rapW, 0.05);
+  }
+  const fps=Math.max(1,cmd.feed)/60;                 // mm/s
+  const eq=Math.max(dl, Math.max(dr,dw)*G.degmm);    // blended distance
+  return Math.max(eq/fps, 0.02);
+}
+
+function compile(){
+  $('log').innerHTML='';
+  const {cmds,errs}=parseGcode($('gcode').value);
+  for(const e of errs) logMsg('e',e);
+  PROG=cmds;
+  let hard=0;
+  for(const c of PROG){
+    c.bad=false;
+    if(c.type!=='move')continue;
+    c.dur=duration(c);
+    const N=24; let msg=null;
+    for(let i=0;i<=N;i++){
+      const v=validate(solveIK(posAt(c,i/N)));
+      if(!v.ok){msg=v.errs[0];break;}
+    }
+    if(msg){c.bad=true;c.err=msg;hard++;logMsg('e',`Line ${c.line}: ${msg}  «${c.txt}»`);}
+  }
+  const moves=PROG.filter(c=>c.type==='move');
+  const tt=moves.reduce((s,c)=>s+c.dur,0)+PROG.filter(c=>c.type==='dwell').reduce((s,c)=>s+c.sec,0);
+  logMsg('i',`Compiled ${PROG.length} blocks (${moves.length} moves) · est ${tt.toFixed(1)} s · ${hard} unreachable`);
+  if(hard) logMsg('w','Program will not run until unreachable blocks are fixed.');
+  renderProg();
+  return hard===0 && !errs.length;
+}
+$('bCompile').onclick=compile;
+
+function renderProg(){
+  const el=$('plist');
+  el.innerHTML=PROG.map((c,i)=>{
+    const cls=c.bad?'bad':(i<RUN.idx?'done':(i===RUN.idx&&RUN.active?'cur':''));
+    return `<div class="${cls}" data-i="${i}"><i>${c.line}</i>${c.txt.replace(/</g,'&lt;')}</div>`;
+  }).join('');
+  const cur=el.querySelector('.cur'); if(cur)cur.scrollIntoView({block:'nearest'});
+}
+
+/* ---- runner ---- */
+const RUN={active:false,idx:0,t:0,last:0,speed:1,wait:0,paused:false};
+function setStatus(s,col){const e=$('status');e.textContent=s;e.style.color=col||'';}
+
+function startRun(){
+  if(!PROG.length){ if(!compile())return; }
+  if(PROG.some(c=>c.bad)){logMsg('e','Cannot start: unreachable blocks present.');return;}
+  if(RUN.idx>=PROG.length)RUN.idx=0;
+  if(!RUN.active||RUN.paused){
+    RUN.active=true;RUN.paused=false;RUN.last=performance.now();
+    $('bPlay').textContent='⏸ Pause';
+    setStatus('Running','#3ddc84');
+    requestAnimationFrame(tick);
+  }else{
+    RUN.paused=true;RUN.active=false;$('bPlay').textContent='▶ Play';setStatus('Paused','#ffb340');
+  }
+  renderProg();
+}
+$('bPlay').onclick=startRun;
+$('bStop').onclick=()=>{RUN.active=false;RUN.paused=false;RUN.idx=0;RUN.t=0;RUN.wait=0;
+  $('bPlay').textContent='▶ Play';setStatus('Idle');renderProg();};
+$('bStep').onclick=()=>{
+  if(!PROG.length){if(!compile())return;}
+  if(RUN.idx>=PROG.length){RUN.idx=0;}
+  const c=PROG[RUN.idx];
+  if(c.type==='move'){setPose(c.to);}
+  else if(c.type==='offset'){pose=Object.assign({},pose,c.to);syncSliders();render();}
+  RUN.idx++;RUN.t=0;renderProg();setStatus(`Stepped to block ${RUN.idx}`);
+};
+$('sSpeed').oninput=e=>{RUN.speed=+e.target.value;$('nSpeed').value=RUN.speed;};
+$('nSpeed').onchange=e=>{RUN.speed=clamp(+e.target.value,0.05,20);$('sSpeed').value=RUN.speed;};
+
+function tick(now){
+  if(!RUN.active)return;
+  let dt=Math.min((now-RUN.last)/1000,0.1)*RUN.speed;
+  RUN.last=now;
+  let guard=0;
+  while(dt>0 && RUN.active && guard++<500){
+    if(RUN.idx>=PROG.length){
+      if($('cLoop').checked){RUN.idx=0;RUN.t=0;logMsg('i','Loop restart');continue;}
+      RUN.active=false;$('bPlay').textContent='▶ Play';setStatus('Program complete','#3ddc84');
+      renderProg();return;
+    }
+    const c=PROG[RUN.idx];
+    if(c.type==='end'){
+      if($('cLoop').checked){RUN.idx=0;RUN.t=0;logMsg('i','M2/M30 → loop');continue;}
+      RUN.active=false;RUN.idx=PROG.length;$('bPlay').textContent='▶ Play';
+      setStatus('Program end (M2/M30)','#3ddc84');renderProg();return;
+    }
+    if(c.type==='pause'){
+      RUN.active=false;RUN.paused=true;RUN.idx++;$('bPlay').textContent='▶ Resume';
+      setStatus('M0 pause — press Play','#ffb340');logMsg('i',`Line ${c.line}: M0 pause`);renderProg();return;
+    }
+    if(c.type==='offset'){
+      pose=Object.assign({},pose,c.to);syncSliders();RUN.idx++;renderProg();continue;
+    }
+    if(c.type==='dwell'){
+      RUN.t+=dt;
+      setStatus(`Dwell ${Math.max(0,c.sec-RUN.t).toFixed(2)} s`,'#ffb340');
+      if(RUN.t>=c.sec){dt=RUN.t-c.sec;RUN.t=0;RUN.idx++;renderProg();}
+      else {dt=0;}
+      continue;
+    }
+    // move
+    RUN.t+=dt;
+    const f=Math.min(1,RUN.t/c.dur);
+    setPose(posAt(c,f),false);
+    setStatus(`Block ${RUN.idx+1}/${PROG.length} · line ${c.line} · ${(f*100).toFixed(0)}%`,'#3ddc84');
+    if(f>=1){dt=RUN.t-c.dur;RUN.t=0;RUN.idx++;renderProg();}
+    else dt=0;
+  }
+  requestAnimationFrame(tick);
+}
+
+/* =========================================================================
+   BOOT
+   ========================================================================= */
+buildGeometry(); updateDerived();
+lastGood=Object.assign({__ok:true},pose);
+syncSliders(); resize(); render(); compile();
+logMsg('i',`Datum Z0 = fully retracted, ${zHome.toFixed(1)} mm above the base. Raise Z before tilting.`);
+window.addEventListener('resize',()=>{resize();render();});
+</script>
+</body>
+</html>
